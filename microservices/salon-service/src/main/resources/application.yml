@@ -1,0 +1,50 @@
+server:
+  port: 8081
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: salon-service
+
+  datasource:
+    url: jdbc:postgresql://${SALON_DB_HOST:localhost}:${SALON_DB_PORT:5432}/${SALON_DB_NAME:salondb}
+    username: ${SALON_DB_USER:salon}
+    password: ${SALON_DB_PASSWORD:salon}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Eureka/Config server dolaze u sledecem delu projekta (spring-cloud moduli).
+  # Do tada su namerno iskljuceni da bi salon-service mogao da radi samostalno.
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.salonbooking: DEBUG
