@@ -1,0 +1,57 @@
+server:
+  port: 8082
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://${AUTH_DB_HOST:localhost}:${AUTH_DB_PORT:5432}/${AUTH_DB_NAME:authdb}
+    username: ${AUTH_DB_USER:auth}
+    password: ${AUTH_DB_PASSWORD:auth}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Eureka/Config server dolaze u kasnijem delu projekta - namerno iskljuceni za sada
+  # (vidi napomenu u salon-service/application.yml).
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  # VAZNO: ovo je samo dev/test podrazumevana vrednost. U produkciji se MORA
+  # postaviti JWT_SECRET env varijabla na nasumican, dovoljno dugacak string
+  # (minimum 32 karaktera za HS256) i ne sme se cuvati u git repozitorijumu.
+  secret: ${JWT_SECRET:salon-booking-system-dev-secret-change-me-please-32chars-min}
+  expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.salonbooking: DEBUG
