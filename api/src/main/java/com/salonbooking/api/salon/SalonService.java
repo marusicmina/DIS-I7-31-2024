@@ -26,7 +26,7 @@ public interface SalonService {
      * Vrati detalje jednog salona po ID-u. Baca NotFoundException (404) ako ne postoji.
      */
     @GetMapping(value = "/salons/{salonId}", produces = "application/json")
-    Salon getSalon(@PathVariable long salonId);
+    Salon getSalon(@PathVariable("salonId") long salonId);
 
     /**
      * Kreiraj novi salon.
@@ -38,11 +38,13 @@ public interface SalonService {
      * Izmeni postojeci salon.
      */
     @PutMapping(value = "/salons/{salonId}", consumes = "application/json", produces = "application/json")
-    Salon updateSalon(@PathVariable long salonId, @RequestBody Salon body);
+    Salon updateSalon(@PathVariable("salonId") long salonId, @RequestBody Salon body);
+
 
     /**
      * Obrisi salon.
      */
     @DeleteMapping(value = "/salons/{salonId}")
-    void deleteSalon(@PathVariable long salonId);
+    void deleteSalon(@PathVariable("salonId") long salonId);
+
 }

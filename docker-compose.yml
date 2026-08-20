@@ -77,6 +77,40 @@ services:
       auth-db:
         condition: service_healthy
 
+  catalog-db:
+    image: postgres:16-alpine
+    container_name: catalog-db
+    environment:
+      POSTGRES_DB: catalogdb
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: catalog
+    ports:
+      - "5435:5432"
+    volumes:
+      - catalog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog -d catalogdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  catalog-service:
+    build:
+      context: ./microservices/catalog-service
+    container_name: catalog-service
+    environment:
+      CATALOG_DB_HOST: catalog-db
+      CATALOG_DB_PORT: 5432
+      CATALOG_DB_NAME: catalogdb
+      CATALOG_DB_USER: catalog
+      CATALOG_DB_PASSWORD: catalog
+    ports:
+      - "8083:8083"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+
 volumes:
   salon-db-data:
   auth-db-data:
+  catalog-db-data:

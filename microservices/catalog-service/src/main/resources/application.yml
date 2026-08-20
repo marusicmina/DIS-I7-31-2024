@@ -1,0 +1,51 @@
+server:
+  port: 8083
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: catalog-service
+
+  datasource:
+    # Podrazumevane vrednosti vaze SAMO za lokalno pokretanje iz IDE-a (baza je
+    # kroz docker-compose mapirana na host port 5435). Unutar Docker-a
+    # docker-compose postavlja CATALOG_DB_HOST=catalog-db i CATALOG_DB_PORT=5432.
+    url: jdbc:postgresql://${CATALOG_DB_HOST:localhost}:${CATALOG_DB_PORT:5435}/${CATALOG_DB_NAME:catalogdb}
+    username: ${CATALOG_DB_USER:catalog}
+    password: ${CATALOG_DB_PASSWORD:catalog}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.salonbooking: DEBUG

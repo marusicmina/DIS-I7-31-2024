@@ -31,11 +31,12 @@ public interface AuthService {
     List<UserSummary> getUsers();
 
     @GetMapping(value = "/auth/users/{userId}", produces = "application/json")
-    UserSummary getUser(@PathVariable long userId);
+    UserSummary getUser(@PathVariable("userId") long userId);
 
     @PutMapping(value = "/auth/users/{userId}", consumes = "application/json", produces = "application/json")
-    UserSummary updateUser(@PathVariable long userId, @RequestBody UpdateUserRequest body);
+    UserSummary updateUser(@PathVariable("userId") long userId, @RequestBody UpdateUserRequest body);
+
 
     @DeleteMapping(value = "/auth/users/{userId}")
-    void deleteUser(@PathVariable long userId);
+    void deleteUser(@PathVariable("userId") long userId);
 }
