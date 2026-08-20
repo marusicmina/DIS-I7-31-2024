@@ -1,0 +1,50 @@
+name: CI - build & test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout koda
+        uses: actions/checkout@v4
+
+      - name: Podesi JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Keširaj Gradle zavisnosti
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Dozvoli izvrsavanje gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build (kompajliranje svih modula)
+        run: ./gradlew build -x test
+
+      - name: Unit i integracioni testovi
+        run: ./gradlew test
+        # Testcontainers integracioni testovi zahtevaju Docker,
+        # koji je podrazumevano dostupan na ubuntu-latest GitHub Actions runneru.
+
+      - name: Objavi rezultate testova
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/build/reports/tests/'
+          retention-days: 7

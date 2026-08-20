@@ -1,0 +1,43 @@
+# Docker Compose za razvojno (dev) okruzenje.
+# Napomena: projekat se gradi deo po deo - ovde su za sada samo komponente
+# koje su vec implementirane (salon-service). Ostali servisi (auth, catalog,
+# staff, booking, review, notification, eureka, config-server, gateway, kafka)
+# dodaju se u narednim delovima projekta.
+
+services:
+
+  salon-db:
+    image: postgres:16-alpine
+    container_name: salon-db
+    environment:
+      POSTGRES_DB: salondb
+      POSTGRES_USER: salon
+      POSTGRES_PASSWORD: salon
+    ports:
+      - "5433:5432"
+    volumes:
+      - salon-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salon -d salondb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  salon-service:
+    build:
+      context: ./microservices/salon-service
+    container_name: salon-service
+    environment:
+      SALON_DB_HOST: salon-db
+      SALON_DB_PORT: 5432
+      SALON_DB_NAME: salondb
+      SALON_DB_USER: salon
+      SALON_DB_PASSWORD: salon
+    ports:
+      - "8081:8081"
+    depends_on:
+      salon-db:
+        condition: service_healthy
+
+volumes:
+  salon-db-data:
