@@ -8,7 +8,7 @@ spring:
     name: salon-service
 
   datasource:
-    url: jdbc:postgresql://${SALON_DB_HOST:localhost}:${SALON_DB_PORT:5432}/${SALON_DB_NAME:salondb}
+    url: jdbc:postgresql://${SALON_DB_HOST:localhost}:${SALON_DB_PORT:5433}/${SALON_DB_NAME:salondb}
     username: ${SALON_DB_USER:salon}
     password: ${SALON_DB_PASSWORD:salon}
     driver-class-name: org.postgresql.Driver
