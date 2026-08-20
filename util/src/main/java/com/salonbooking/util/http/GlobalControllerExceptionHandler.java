@@ -1,5 +1,6 @@
 package com.salonbooking.util.http;
 
+import com.salonbooking.util.exceptions.AuthenticationException;
 import com.salonbooking.util.exceptions.ConflictException;
 import com.salonbooking.util.exceptions.InvalidInputException;
 import com.salonbooking.util.exceptions.NotFoundException;
@@ -37,6 +38,12 @@ public class GlobalControllerExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public HttpErrorInfo handleConflictException(WebRequest request, Exception ex) {
         return createHttpErrorInfo(HttpStatus.CONFLICT, request, ex);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(AuthenticationException.class)
+    public HttpErrorInfo handleAuthenticationException(WebRequest request, Exception ex) {
+        return createHttpErrorInfo(HttpStatus.UNAUTHORIZED, request, ex);
     }
 
     private HttpErrorInfo createHttpErrorInfo(HttpStatus httpStatus, WebRequest request, Exception ex) {

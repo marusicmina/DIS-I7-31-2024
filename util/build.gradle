@@ -16,5 +16,13 @@ dependencyManagement {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // JwtUtil (deljen izmedju auth-service i, kasnije, gateway-a radi validacije tokena).
+    // jjwt-api je implementation (treba nam u kodu ovde), jjwt-impl/jjwt-jackson su runtimeOnly
+    // (samo za rad u runtime-u, ne izlazu na compile classpath potrosaca) - preporuceni jjwt setup.
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
