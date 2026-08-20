@@ -8,7 +8,8 @@ razvijen kao mikroservisna arhitektura po uzoru na knjigu
 > Status: projekat se gradi inkrementalno, deo po deo (commit po commit).
 > Ovaj dokument se ažurira posle svakog dela. Trenutno završeno: **Deo 1 —
 > osnovna struktura projekta, `salon-service`, dokumentacija, docker-compose
-> skelet, CI pipeline (build/test).**
+> skelet, CI pipeline (build/test).** **Deo 2 — `auth-service`** (registracija,
+> login, JWT, hashovanje lozinki preko BCrypt-a).
 
 ## 1. Opis poslovne logike sistema
 
@@ -156,10 +157,27 @@ kontejnera).
 docker compose up --build
 ```
 
-`docker compose up` diže: `salon-service` + njegovu `salon-db` (PostgreSQL)
-bazu. Ostale komponente (auth, catalog, staff, booking, review,
-notification, eureka, config-server, gateway, kafka) dodaju se u narednim
-delovima projekta i biće uključene u isti `docker-compose.yml`.
+`docker compose up` diže: `salon-service` + `salon-db`, i `auth-service` +
+`auth-db` (svaki servis ima svoju bazu, svaka na svom portu na hostu:
+salon-db `5433`, auth-db `5434`, da se ne bi sudarali sa lokalnim
+Postgres-om ako ga imaš na `5432`). Ostale komponente (catalog, staff,
+booking, review, notification, eureka, config-server, gateway, kafka)
+dodaju se u narednim delovima projekta i biće uključene u isti
+`docker-compose.yml`.
+
+### auth-service - brzi test
+
+```bash
+# Registracija
+curl -X POST http://localhost:8082/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Mina","lastName":"M","email":"mina@example.com","password":"lozinka123","role":"CUSTOMER"}'
+
+# Login (vraca JWT token)
+curl -X POST http://localhost:8082/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"mina@example.com","password":"lozinka123"}'
+```
 
 ### Testiranje
 
@@ -195,8 +213,9 @@ U narednim delovima dodaćemo:
 
 - [x] Deo 1: struktura projekta, `api`/`util` moduli, `salon-service`
       (potpuna implementacija + testovi), docker-compose skelet, CI.
-- [ ] Deo 2: `catalog-service`, `staff-service`.
-- [ ] Deo 3: `auth-service` (JWT autentifikacija).
+- [x] Deo 2: `auth-service` (registracija, login, JWT, BCrypt hashovanje
+      lozinki, testovi).
+- [ ] Deo 3: `catalog-service`, `staff-service`.
 - [ ] Deo 4: `booking-service` (orkestracija, sync pozivi, Kafka producer,
       Resilience4j).
 - [ ] Deo 5: `review-service`, `notification-service` (Kafka consumeri).
