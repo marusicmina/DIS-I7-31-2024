@@ -1,0 +1,51 @@
+server:
+  port: 8084
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: staff-service
+
+  datasource:
+    # Podrazumevane vrednosti vaze SAMO za lokalno pokretanje iz IDE-a (baza je
+    # kroz docker-compose mapirana na host port 5436). Unutar Docker-a
+    # docker-compose postavlja STAFF_DB_HOST=staff-db i STAFF_DB_PORT=5432.
+    url: jdbc:postgresql://${STAFF_DB_HOST:localhost}:${STAFF_DB_PORT:5436}/${STAFF_DB_NAME:staffdb}
+    username: ${STAFF_DB_USER:staff}
+    password: ${STAFF_DB_PASSWORD:staff}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.salonbooking: DEBUG

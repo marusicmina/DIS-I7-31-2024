@@ -110,7 +110,41 @@ services:
       catalog-db:
         condition: service_healthy
 
+  staff-db:
+    image: postgres:16-alpine
+    container_name: staff-db
+    environment:
+      POSTGRES_DB: staffdb
+      POSTGRES_USER: staff
+      POSTGRES_PASSWORD: staff
+    ports:
+      - "5436:5432"
+    volumes:
+      - staff-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U staff -d staffdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  staff-service:
+    build:
+      context: ./microservices/staff-service
+    container_name: staff-service
+    environment:
+      STAFF_DB_HOST: staff-db
+      STAFF_DB_PORT: 5432
+      STAFF_DB_NAME: staffdb
+      STAFF_DB_USER: staff
+      STAFF_DB_PASSWORD: staff
+    ports:
+      - "8084:8084"
+    depends_on:
+      staff-db:
+        condition: service_healthy
+
 volumes:
   salon-db-data:
   auth-db-data:
   catalog-db-data:
+  staff-db-data:
