@@ -7,11 +7,11 @@ include ':microservices:salon-service'
 include ':microservices:auth-service'
 include ':microservices:catalog-service'
 include ':microservices:staff-service'
+include ':microservices:booking-service'
 
 include ':spring-cloud:eureka-server'
 
 // Ostali moduli se dodaju u narednim delovima projekta (deo po deo, commit po commit):
-// include ':microservices:booking-service'
 // include ':microservices:review-service'
 // include ':microservices:notification-service'
 // include ':spring-cloud:config-server'

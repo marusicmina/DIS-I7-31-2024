@@ -170,8 +170,45 @@ services:
       eureka-server:
         condition: service_healthy
 
+  booking-db:
+    image: postgres:16-alpine
+    container_name: booking-db
+    environment:
+      POSTGRES_DB: bookingdb
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+    ports:
+      - "5437:5432"
+    volumes:
+      - booking-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d bookingdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  booking-service:
+    build:
+      context: ./microservices/booking-service
+    container_name: booking-service
+    environment:
+      BOOKING_DB_HOST: booking-db
+      BOOKING_DB_PORT: 5432
+      BOOKING_DB_NAME: bookingdb
+      BOOKING_DB_USER: booking
+      BOOKING_DB_PASSWORD: booking
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    ports:
+      - "8085:8085"
+    depends_on:
+      booking-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
 volumes:
   salon-db-data:
   auth-db-data:
   catalog-db-data:
   staff-db-data:
+  booking-db-data:

@@ -4,6 +4,7 @@ import com.salonbooking.util.exceptions.AuthenticationException;
 import com.salonbooking.util.exceptions.ConflictException;
 import com.salonbooking.util.exceptions.InvalidInputException;
 import com.salonbooking.util.exceptions.NotFoundException;
+import com.salonbooking.util.exceptions.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,12 @@ public class GlobalControllerExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public HttpErrorInfo handleConflictException(WebRequest request, Exception ex) {
         return createHttpErrorInfo(HttpStatus.CONFLICT, request, ex);
+    }
+
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public HttpErrorInfo handleServiceUnavailableException(WebRequest request, Exception ex) {
+        return createHttpErrorInfo(HttpStatus.SERVICE_UNAVAILABLE, request, ex);
     }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
