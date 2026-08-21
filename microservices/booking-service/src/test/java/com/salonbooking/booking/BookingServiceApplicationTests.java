@@ -38,13 +38,16 @@ import static org.mockito.Mockito.when;
  * laznom implementacijom BookingIntegration-a. Zato ovi testovi rade i kad
  * salon, catalog i staff servis nisu pokrenuti - testiramo logiku zakazivanja,
  * a ne mrezu.
+ *
+ * VAZNO: svi testovi dele istu bazu i JUnit ne garantuje redosled izvrsavanja,
+ * pa svaki test koristi SVOG zaposlenog (staffId). Posto se preklapanje termina
+ * proverava po zaposlenom, tako se testovi ne mogu medjusobno remetiti.
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BookingServiceApplicationTests {
 
     private static final long SALON_ID = 1L;
-    private static final long STAFF_ID = 10L;
     private static final long SERVICE_ID = 100L;
     private static final long CLIENT_ID = 55L;
 
@@ -75,7 +78,7 @@ class BookingServiceApplicationTests {
         when(integration.getSalon(anyLong())).thenReturn(salon());
         when(integration.getService(anyLong())).thenReturn(serviceOffering(SALON_ID, 45, true));
         when(integration.checkStaffAvailability(anyLong(), any(), any()))
-                .thenReturn(new AvailabilityResponse(STAFF_ID, true, null));
+                .thenAnswer(inv -> new AvailabilityResponse(inv.getArgument(0), true, null));
     }
 
     @Test
@@ -86,7 +89,7 @@ class BookingServiceApplicationTests {
     void createBooking_happyPath_computesEndTimeFromServiceDuration() {
         LocalDateTime start = futureStart(10, 0);
 
-        Booking booking = createBooking(start);
+        Booking booking = createBooking(101L, start);
 
         assertThat(booking.getBookingId()).isPositive();
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
@@ -99,11 +102,11 @@ class BookingServiceApplicationTests {
 
     @Test
     void createBooking_overlappingWithExisting_returns409() {
-        LocalDateTime start = futureStart(11, 0);
-        createBooking(start);
+        LocalDateTime start = futureStart(10, 0);
+        createBooking(102L, start);
 
         // Drugi termin pocinje 20 minuta kasnije - upada u prvih 45 minuta.
-        ResponseEntity<String> response = postBooking(start.plusMinutes(20), String.class);
+        ResponseEntity<String> response = postBooking(102L, start.plusMinutes(20), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).contains("preklapa");
@@ -111,33 +114,33 @@ class BookingServiceApplicationTests {
 
     @Test
     void createBooking_backToBack_isAllowed() {
-        LocalDateTime start = futureStart(12, 0);
-        createBooking(start);
+        LocalDateTime start = futureStart(10, 0);
+        createBooking(103L, start);
 
         // Termin koji pocinje tacno kad se prethodni zavrsava mora da prodje.
-        ResponseEntity<Booking> response = postBooking(start.plusMinutes(45), Booking.class);
+        ResponseEntity<Booking> response = postBooking(103L, start.plusMinutes(45), Booking.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
 
     @Test
     void createBooking_afterCancellation_slotIsFreeAgain() {
-        LocalDateTime start = futureStart(13, 0);
-        Booking first = createBooking(start);
+        LocalDateTime start = futureStart(10, 0);
+        Booking first = createBooking(104L, start);
 
         restTemplate.postForEntity(url("/bookings/" + first.getBookingId() + "/cancel"), null, Booking.class);
 
         // Otkazan termin ne zauzima vise slot.
-        ResponseEntity<Booking> response = postBooking(start, Booking.class);
+        ResponseEntity<Booking> response = postBooking(104L, start, Booking.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
 
     @Test
     void createBooking_staffNotAvailable_returns422() {
         when(integration.checkStaffAvailability(anyLong(), any(), any()))
-                .thenReturn(new AvailabilityResponse(STAFF_ID, false, "Zaposleni ne radi u danu: SUNDAY"));
+                .thenReturn(new AvailabilityResponse(105L, false, "Zaposleni ne radi u danu: SUNDAY"));
 
-        ResponseEntity<String> response = postBooking(futureStart(14, 0), String.class);
+        ResponseEntity<String> response = postBooking(105L, futureStart(10, 0), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         assertThat(response.getBody()).contains("nije raspoloziv");
@@ -148,7 +151,7 @@ class BookingServiceApplicationTests {
         // Usluga pripada salonu 999, a zakazuje se u salonu 1.
         when(integration.getService(anyLong())).thenReturn(serviceOffering(999L, 45, true));
 
-        ResponseEntity<String> response = postBooking(futureStart(15, 0), String.class);
+        ResponseEntity<String> response = postBooking(106L, futureStart(10, 0), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         assertThat(response.getBody()).contains("ne pripada salonu");
@@ -158,7 +161,7 @@ class BookingServiceApplicationTests {
     void createBooking_inactiveService_returns422() {
         when(integration.getService(anyLong())).thenReturn(serviceOffering(SALON_ID, 45, false));
 
-        ResponseEntity<String> response = postBooking(futureStart(16, 0), String.class);
+        ResponseEntity<String> response = postBooking(107L, futureStart(10, 0), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
         assertThat(response.getBody()).contains("nije u ponudi");
@@ -167,7 +170,7 @@ class BookingServiceApplicationTests {
     @Test
     void createBooking_inThePast_returns422() {
         CreateBookingRequest request = new CreateBookingRequest(
-                CLIENT_ID, SALON_ID, STAFF_ID, SERVICE_ID,
+                CLIENT_ID, SALON_ID, 108L, SERVICE_ID,
                 LocalDateTime.now().minusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0),
                 null);
 
@@ -180,7 +183,7 @@ class BookingServiceApplicationTests {
 
     @Test
     void cancelThenCancelAgain_returns409() {
-        Booking booking = createBooking(futureStart(17, 0));
+        Booking booking = createBooking(109L, futureStart(10, 0));
 
         restTemplate.postForEntity(url("/bookings/" + booking.getBookingId() + "/cancel"), null, Booking.class);
         ResponseEntity<String> second =
@@ -191,7 +194,7 @@ class BookingServiceApplicationTests {
 
     @Test
     void completeBooking_thenCancel_returns409() {
-        Booking booking = createBooking(futureStart(18, 0));
+        Booking booking = createBooking(110L, futureStart(10, 0));
 
         ResponseEntity<Booking> completed = restTemplate.postForEntity(
                 url("/bookings/" + booking.getBookingId() + "/complete"), null, Booking.class);
@@ -210,28 +213,28 @@ class BookingServiceApplicationTests {
     }
 
     @Test
-    void getBookings_filteredByClient() {
-        createBooking(futureStart(19, 0));
+    void getBookings_filteredByStaff() {
+        createBooking(111L, futureStart(10, 0));
 
         ResponseEntity<Booking[]> response =
-                restTemplate.getForEntity(url("/bookings?clientId=" + CLIENT_ID), Booking[].class);
+                restTemplate.getForEntity(url("/bookings?staffId=111"), Booking[].class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-        assertThat(response.getBody()).allMatch(b -> b.getClientId() == CLIENT_ID);
+        assertThat(response.getBody()).hasSize(1);
+        assertThat(response.getBody()[0].getStaffId()).isEqualTo(111L);
     }
 
     // --- pomocne metode ---
 
-    private Booking createBooking(LocalDateTime start) {
-        ResponseEntity<Booking> response = postBooking(start, Booking.class);
+    private Booking createBooking(long staffId, LocalDateTime start) {
+        ResponseEntity<Booking> response = postBooking(staffId, start, Booking.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         return response.getBody();
     }
 
-    private <T> ResponseEntity<T> postBooking(LocalDateTime start, Class<T> type) {
+    private <T> ResponseEntity<T> postBooking(long staffId, LocalDateTime start, Class<T> type) {
         CreateBookingRequest request = new CreateBookingRequest(
-                CLIENT_ID, SALON_ID, STAFF_ID, SERVICE_ID, start, "test termin");
+                CLIENT_ID, SALON_ID, staffId, SERVICE_ID, start, "test termin");
         return restTemplate.postForEntity(url("/bookings"), request, type);
     }
 
