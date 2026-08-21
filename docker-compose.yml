@@ -1,13 +1,28 @@
 # Docker Compose za razvojno (dev) okruzenje.
 # Napomena: projekat se gradi deo po deo - ovde su za sada samo komponente
 # koje su vec implementirane (salon-service, auth-service). Ostali servisi
-# (catalog, staff, booking, review, notification, eureka, config-server,
-# gateway, kafka) dodaju se u narednim delovima projekta.
+# (booking, review, notification, config-server, gateway, kafka) dodaju se
+# u narednim delovima projekta.
 #
 # Pre "docker compose up --build" pokreni "./gradlew build" da se generisu
 # JAR fajlovi (build/libs/*.jar) koje Dockerfile-ovi kopiraju u image.
 
 services:
+
+  eureka-server:
+    build:
+      context: ./spring-cloud/eureka-server
+    container_name: eureka-server
+    environment:
+      EUREKA_HOSTNAME: eureka-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   salon-db:
     image: postgres:16-alpine
@@ -36,10 +51,13 @@ services:
       SALON_DB_NAME: salondb
       SALON_DB_USER: salon
       SALON_DB_PASSWORD: salon
+      EUREKA_URL: http://eureka-server:8761/eureka/
     ports:
       - "8081:8081"
     depends_on:
       salon-db:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
 
   auth-db:
@@ -71,10 +89,13 @@ services:
       AUTH_DB_PASSWORD: auth
       # VAZNO: u produkciji postaviti pravu tajnu vrednost (npr. kroz .env fajl koji NIJE u git-u).
       JWT_SECRET: ${JWT_SECRET:-salon-booking-system-dev-secret-change-me-please-32chars-min}
+      EUREKA_URL: http://eureka-server:8761/eureka/
     ports:
       - "8082:8082"
     depends_on:
       auth-db:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
 
   catalog-db:
@@ -104,10 +125,13 @@ services:
       CATALOG_DB_NAME: catalogdb
       CATALOG_DB_USER: catalog
       CATALOG_DB_PASSWORD: catalog
+      EUREKA_URL: http://eureka-server:8761/eureka/
     ports:
       - "8083:8083"
     depends_on:
       catalog-db:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
 
   staff-db:
@@ -137,10 +161,13 @@ services:
       STAFF_DB_NAME: staffdb
       STAFF_DB_USER: staff
       STAFF_DB_PASSWORD: staff
+      EUREKA_URL: http://eureka-server:8761/eureka/
     ports:
       - "8084:8084"
     depends_on:
       staff-db:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
 
 volumes:
