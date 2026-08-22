@@ -1,0 +1,354 @@
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  logging: *default-logging
+  environment: &service-env
+    SPRING_PROFILES_ACTIVE: prod
+    EUREKA_URL: http://eureka-server:8761/eureka/
+    CONFIG_SERVER_URL: http://config-server:8888
+
+services:
+
+  eureka-server:
+    image: ${IMAGE_PREFIX:-salon-booking}/eureka-server:${IMAGE_TAG:-latest}
+    build:
+      context: ./spring-cloud/eureka-server
+    container_name: eureka-server
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      EUREKA_HOSTNAME: eureka-server
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  config-server:
+    image: ${IMAGE_PREFIX:-salon-booking}/config-server:${IMAGE_TAG:-latest}
+    build:
+      context: ./spring-cloud/config-server
+    container_name: config-server
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      CONFIG_REPO_LOCATION: file:/config-repo/
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    volumes:
+      - ./config-repo:/config-repo:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  salon-db:
+    image: postgres:16-alpine
+    container_name: salon-db
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: salondb
+      POSTGRES_USER: salon
+      POSTGRES_PASSWORD: ${SALON_DB_PASSWORD:?Postavi SALON_DB_PASSWORD u .env}
+    volumes:
+      - salon-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salon -d salondb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  salon-service:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/salon-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./microservices/salon-service
+    container_name: salon-service
+    environment:
+      <<: *service-env
+      SALON_DB_HOST: salon-db
+      SALON_DB_PORT: 5432
+      SALON_DB_NAME: salondb
+      SALON_DB_USER: salon
+      SALON_DB_PASSWORD: ${SALON_DB_PASSWORD:?Postavi SALON_DB_PASSWORD u .env}
+    depends_on:
+      salon-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  auth-db:
+    image: postgres:16-alpine
+    container_name: auth-db
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?Postavi AUTH_DB_PASSWORD u .env}
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth -d authdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/auth-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./microservices/auth-service
+    container_name: auth-service
+    environment:
+      <<: *service-env
+      AUTH_DB_HOST: auth-db
+      AUTH_DB_PORT: 5432
+      AUTH_DB_NAME: authdb
+      AUTH_DB_USER: auth
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?Postavi AUTH_DB_PASSWORD u .env}
+      JWT_SECRET: ${JWT_SECRET:?Postavi JWT_SECRET u .env (minimum 32 karaktera)}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  catalog-db:
+    image: postgres:16-alpine
+    container_name: catalog-db
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: catalogdb
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: ${CATALOG_DB_PASSWORD:?Postavi CATALOG_DB_PASSWORD u .env}
+    volumes:
+      - catalog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog -d catalogdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  catalog-service:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/catalog-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./microservices/catalog-service
+    container_name: catalog-service
+    environment:
+      <<: *service-env
+      CATALOG_DB_HOST: catalog-db
+      CATALOG_DB_PORT: 5432
+      CATALOG_DB_NAME: catalogdb
+      CATALOG_DB_USER: catalog
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:?Postavi CATALOG_DB_PASSWORD u .env}
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  staff-db:
+    image: postgres:16-alpine
+    container_name: staff-db
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: staffdb
+      POSTGRES_USER: staff
+      POSTGRES_PASSWORD: ${STAFF_DB_PASSWORD:?Postavi STAFF_DB_PASSWORD u .env}
+    volumes:
+      - staff-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U staff -d staffdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  staff-service:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/staff-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./microservices/staff-service
+    container_name: staff-service
+    environment:
+      <<: *service-env
+      STAFF_DB_HOST: staff-db
+      STAFF_DB_PORT: 5432
+      STAFF_DB_NAME: staffdb
+      STAFF_DB_USER: staff
+      STAFF_DB_PASSWORD: ${STAFF_DB_PASSWORD:?Postavi STAFF_DB_PASSWORD u .env}
+    depends_on:
+      staff-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  booking-db:
+    image: postgres:16-alpine
+    container_name: booking-db
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: bookingdb
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: ${BOOKING_DB_PASSWORD:?Postavi BOOKING_DB_PASSWORD u .env}
+    volumes:
+      - booking-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d bookingdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  booking-service:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/booking-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./microservices/booking-service
+    container_name: booking-service
+    environment:
+      <<: *service-env
+      BOOKING_DB_HOST: booking-db
+      BOOKING_DB_PORT: 5432
+      BOOKING_DB_NAME: bookingdb
+      BOOKING_DB_USER: booking
+      BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD:?Postavi BOOKING_DB_PASSWORD u .env}
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      booking-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  notification-service:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/notification-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./microservices/notification-service
+    container_name: notification-service
+    environment:
+      <<: *service-env
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  gateway:
+    <<: *service-defaults
+    image: ${IMAGE_PREFIX:-salon-booking}/gateway:${IMAGE_TAG:-latest}
+    build:
+      context: ./spring-cloud/gateway
+    container_name: gateway
+    # Jedini port otvoren prema spoljnom svetu.
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+volumes:
+  salon-db-data:
+  auth-db-data:
+  catalog-db-data:
+  staff-db-data:
+  booking-db-data:
+  kafka-data:

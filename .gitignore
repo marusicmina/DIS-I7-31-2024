@@ -13,3 +13,6 @@ HELP.md
 .settings/
 bin/
 target/
+
+# Fajl sa produkcijskim lozinkama, sablon je .env.prod.example
+.env

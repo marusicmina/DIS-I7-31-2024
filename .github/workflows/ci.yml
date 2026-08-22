@@ -1,26 +1,38 @@
-name: CI - build & test
+# Pipeline za projekat, podeljen u tri faze.
+#
+#   build   - kompajliranje svih modula
+#   test    - unit i integracioni testovi
+#   deploy  - objavljivanje Docker image-a na GitHub Container Registry
+#
+# Faza deploy se pokreće samo ako testovi prođu i samo za main granu.
+# Objavljeni image-i se zatim koriste u docker-compose.prod.yml.
+
+name: CI/CD - build, test, deploy
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
+
   build-and-test:
+    name: Build i testovi
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout koda
+      - name: Preuzimanje koda
         uses: actions/checkout@v4
 
-      - name: Podesi JDK 17
+      - name: Podesavanje JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Keširaj Gradle zavisnosti
+      - name: Kesiranje Gradle zavisnosti
         uses: actions/cache@v4
         with:
           path: |
@@ -30,21 +42,107 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Dozvoli izvrsavanje gradlew
+      - name: Dozvola za izvrsavanje gradlew skripte
         run: chmod +x ./gradlew
 
-      - name: Build (kompajliranje svih modula)
+      # Build se pokrece bez testova kako bi se greske u kompilaciji
+      # videle odmah, pre nego sto krenu duzi integracioni testovi.
+      - name: Faza build
         run: ./gradlew build -x test
 
-      - name: Unit i integracioni testovi
+      # Testcontainers zahteva Docker, koji je dostupan na ubuntu-latest runneru.
+      - name: Faza test
         run: ./gradlew test
-        # Testcontainers integracioni testovi zahtevaju Docker,
-        # koji je podrazumevano dostupan na ubuntu-latest GitHub Actions runneru.
 
-      - name: Objavi rezultate testova
+      - name: Cuvanje izvestaja o testovima
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: '**/build/reports/tests/'
           retention-days: 7
+
+  publish-images:
+    name: Deploy - objavljivanje Docker image-a
+    runs-on: ubuntu-latest
+    # Ovaj job ceka da prethodni uspesno zavrsi.
+    needs: build-and-test
+    # Za pull request se rade samo build i testovi, bez objavljivanja.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Preuzimanje koda
+        uses: actions/checkout@v4
+
+      - name: Podesavanje JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Kesiranje Gradle zavisnosti
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Dozvola za izvrsavanje gradlew skripte
+        run: chmod +x ./gradlew
+
+      # Dockerfile-ovi kopiraju build/libs/*.jar, pa JAR fajlovi moraju
+      # da postoje pre nego sto krene docker build.
+      - name: Kreiranje JAR fajlova
+        run: ./gradlew build -x test
+
+      - name: Prijava na GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build i objavljivanje image-a
+        run: |
+          set -euo pipefail
+          PREFIX="ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          SHA="${GITHUB_SHA::7}"
+
+          COMPONENTS="
+          microservices/salon-service
+          microservices/auth-service
+          microservices/catalog-service
+          microservices/staff-service
+          microservices/booking-service
+          microservices/notification-service
+          spring-cloud/eureka-server
+          spring-cloud/config-server
+          spring-cloud/gateway
+          "
+
+          for path in $COMPONENTS; do
+            name=$(basename "$path")
+            echo "::group::$name"
+            docker build -t "$PREFIX/$name:latest" -t "$PREFIX/$name:$SHA" "$path"
+            docker push "$PREFIX/$name:latest"
+            docker push "$PREFIX/$name:$SHA"
+            echo "::endgroup::"
+          done
+
+      # Provera da produkcijski Compose fajl ispravno referise objavljene image-e.
+      - name: Provera produkcijske konfiguracije
+        run: docker compose -f docker-compose.prod.yml config --quiet
+        env:
+          SALON_DB_PASSWORD: provera
+          AUTH_DB_PASSWORD: provera
+          CATALOG_DB_PASSWORD: provera
+          STAFF_DB_PASSWORD: provera
+          BOOKING_DB_PASSWORD: provera
+          JWT_SECRET: provera-minimum-32-karaktera-duga-tajna
