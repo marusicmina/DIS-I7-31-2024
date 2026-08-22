@@ -30,15 +30,7 @@ import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Orkestrator zakazivanja.
- *
- * Ovo je jedini servis u sistemu koji sinhrono zove druge - i to namerno.
- * Termin ne sme da se upise pre nego sto se potvrdi da salon, usluga i
- * zaposleni zaista dozvoljavaju to zakazivanje, pa se odgovor mora cekati.
- * Sve sto NE mora da se ceka (notifikacije, omogucavanje recenzije) ide
- * asinhrono, kroz dogadjaje.
- */
+
 @RestController
 public class BookingServiceImpl implements BookingService {
 
@@ -66,13 +58,8 @@ public class BookingServiceImpl implements BookingService {
     public Booking createBooking(@RequestBody CreateBookingRequest body) {
         validateRequest(body);
 
-        // 1. Salon mora da postoji. Ako salon-service kaze 404, ovde ce puci
-        //    NotFoundException; ako je nedostupan, ServiceUnavailableException (503).
         Salon salon = integration.getSalon(body.getSalonId());
 
-        // 2. Usluga mora da postoji, da bude aktivna i da pripada BAS tom salonu.
-        //    Bez poslednje provere klijent bi mogao da zakaze uslugu jednog salona
-        //    kod zaposlenog iz drugog.
         ServiceOffering service = integration.getService(body.getServiceId());
         if (service.getSalonId() != body.getSalonId()) {
             throw new InvalidInputException("Usluga " + body.getServiceId()
@@ -82,19 +69,15 @@ public class BookingServiceImpl implements BookingService {
             throw new InvalidInputException("Usluga '" + service.getName() + "' trenutno nije u ponudi");
         }
 
-        // 3. Kraj termina racunamo sami, iz trajanja usluge - klijent ga ne salje.
         LocalDateTime start = body.getStartTime();
         LocalDateTime end = start.plusMinutes(service.getDurationMinutes());
 
-        // 4. Da li zaposleni uopste radi u to vreme? To zna staff-service.
         AvailabilityResponse availability =
                 integration.checkStaffAvailability(body.getStaffId(), start, end);
         if (!availability.isAvailable()) {
             throw new InvalidInputException("Zaposleni nije raspoloziv: " + availability.getReason());
         }
 
-        // 5. Da li vec ima termin u to vreme? To zna SAMO booking-service,
-        //    jer su termini njegovi podaci. Zato ova provera ide nad nasom bazom.
         boolean overlaps = repository.existsOverlappingBooking(
                 body.getStaffId(), start, end, BookingStatus.CANCELLED);
         if (overlaps) {
@@ -185,21 +168,11 @@ public class BookingServiceImpl implements BookingService {
         BookingEntity saved = repository.save(entity);
         LOG.info("Termin id={} oznacen kao odrzan", bookingId);
 
-        // Signal review-service-u da klijent sada sme da ostavi recenziju.
         publishEvent(BookingEventType.BOOKING_COMPLETED, saved);
         return mapper.entityToApi(saved, serviceAddress());
     }
 
-    /**
-     * Objavljuje dogadjaj o promeni termina.
-     *
-     * NAPOMENA o "dual write" problemu: upis u bazu i slanje poruke su dve
-     * odvojene operacije koje nisu u istoj transakciji. Ako aplikacija padne
-     * tacno izmedju njih, termin ostaje zapisan a dogadjaj se nikad ne posalje -
-     * klijent nece dobiti potvrdu. Za projekat je ovo prihvatljivo; u produkciji
-     * se resava obrascem "transactional outbox": dogadjaj se u istoj transakciji
-     * upise u pomocnu tabelu, a zaseban proces ga odatle salje brokeru.
-     */
+   
     private void publishEvent(BookingEventType type, BookingEntity entity) {
         BookingEvent event = new BookingEvent(
                 type,

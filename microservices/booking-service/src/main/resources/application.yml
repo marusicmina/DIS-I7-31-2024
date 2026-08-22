@@ -8,9 +8,6 @@ spring:
     name: booking-service
 
   datasource:
-    # Podrazumevane vrednosti vaze SAMO za lokalno pokretanje iz IDE-a (baza je
-    # kroz docker-compose mapirana na host port 5437). Unutar Docker-a
-    # docker-compose postavlja BOOKING_DB_HOST=booking-db i BOOKING_DB_PORT=5432.
     url: jdbc:postgresql://${BOOKING_DB_HOST:localhost}:${BOOKING_DB_PORT:5437}/${BOOKING_DB_NAME:bookingdb}
     username: ${BOOKING_DB_USER:booking}
     password: ${BOOKING_DB_PASSWORD:booking}
@@ -24,27 +21,19 @@ spring:
       hibernate:
         format_sql: true
 
-  # Povuci zajednicku konfiguraciju sa config-servera.
-  # "optional:" znaci da servis radi i ako config-server nije pokrenut.
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
   cloud:
-    # --- Asinhrona komunikacija (Spring Cloud Stream + Kafka) ---
     stream:
       bindings:
-        # Ime binding-a koje kod koristi (StreamBridge) -> stvarni Kafka topic.
-        # Kod ne zna ime topic-a, sto znaci da moze da se promeni bez rekompajliranja.
         bookingEvents-out-0:
           destination: booking-events
           producer:
-            # Kljuc particije uzimamo iz zaglavlja poruke (bookingId), da bi
-            # dogadjaji istog termina uvek isli u istu particiju - i time zadrzali redosled.
             partition-key-expression: headers['partitionKey']
       kafka:
         binder:
-          # Lokalno iz IDE-a: Kafka je mapirana na host port 29092.
-          # U Docker-u docker-compose postavlja KAFKA_BROKERS na kafka:9092.
+         
           brokers: ${KAFKA_BROKERS:localhost:29092}
           auto-create-topics: true
 
@@ -63,22 +52,17 @@ eureka:
     leaseRenewalIntervalInSeconds: 5
     leaseExpirationDurationInSeconds: 10
 
-# --- Otpornost na otkaze zavisnih servisa ---
 resilience4j:
   circuitbreaker:
     configs:
       default:
-        # Posmatramo poslednjih 10 poziva; ako vise od pola padne, otvaramo kolo.
         slidingWindowSize: 10
         minimumNumberOfCalls: 5
         failureRateThreshold: 50
-        # Kolo ostaje otvoreno 10s, pa propusta 3 probna poziva da vidi
-        # da li se servis oporavio.
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
         registerHealthIndicator: true
-        # 404 nije kvar servisa nego legitiman odgovor - ne sme da otvara kolo.
         ignoreExceptions:
           - org.springframework.web.client.HttpClientErrorException$NotFound
           - com.salonbooking.util.exceptions.NotFoundException
@@ -93,8 +77,6 @@ resilience4j:
   retry:
     configs:
       default:
-        # Ukupno 3 pokusaja sa 200ms pauze - pokriva kratke mrezne smetnje.
-        # Vise od toga bi samo produzilo cekanje klijenta.
         maxAttempts: 3
         waitDuration: 200ms
         retryExceptions:

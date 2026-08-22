@@ -8,10 +8,6 @@ spring:
     name: salon-service
 
   datasource:
-    # Podrazumevane vrednosti vaze SAMO za lokalno pokretanje iz IDE-a, kada baza
-    # radi kroz docker-compose i mapirana je na host port 5433 (5432 je zauzet
-    # lokalnim Postgres-om). Kada servis radi unutar Docker-a, docker-compose
-    # postavlja SALON_DB_HOST=salon-db i SALON_DB_PORT=5432 i pregazi ove vrednosti.
     url: jdbc:postgresql://${SALON_DB_HOST:localhost}:${SALON_DB_PORT:5433}/${SALON_DB_NAME:salondb}
     username: ${SALON_DB_USER:salon}
     password: ${SALON_DB_PASSWORD:salon}
@@ -25,8 +21,6 @@ spring:
       hibernate:
         format_sql: true
 
-  # Povuci zajednicku konfiguraciju sa config-servera.
-  # "optional:" znaci da servis radi i ako config-server nije pokrenut.
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
@@ -34,15 +28,10 @@ eureka:
   client:
     enabled: true
     serviceUrl:
-      # Lokalno iz IDE-a: Eureka na localhost. U Docker-u: docker-compose
-      # postavlja EUREKA_URL na http://eureka-server:8761/eureka/
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
-    # Kraci intervali nego podrazumevani (30s) - u razvoju hocemo da servis
-    # osvane u registru za par sekundi, a ne za pola minuta.
     registryFetchIntervalSeconds: 5
     initialInstanceInfoReplicationIntervalSeconds: 5
   instance:
-    # Registruj se preko IP adrese umesto hostname-a; u Docker-u je to pouzdanije.
     preferIpAddress: true
     leaseRenewalIntervalInSeconds: 5
     leaseExpirationDurationInSeconds: 10

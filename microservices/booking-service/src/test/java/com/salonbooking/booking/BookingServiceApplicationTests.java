@@ -32,18 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-/**
- * Integracioni testovi orkestracije.
- *
- * Baza je prava (Testcontainers Postgres), ali su ostali mikroservisi zamenjeni
- * laznom implementacijom BookingIntegration-a. Zato ovi testovi rade i kad
- * salon, catalog i staff servis nisu pokrenuti - testiramo logiku zakazivanja,
- * a ne mrezu.
- *
- * VAZNO: svi testovi dele istu bazu i JUnit ne garantuje redosled izvrsavanja,
- * pa svaki test koristi SVOG zaposlenog (staffId). Posto se preklapanje termina
- * proverava po zaposlenom, tako se testovi ne mogu medjusobno remetiti.
- */
+
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BookingServiceApplicationTests {
@@ -74,7 +63,6 @@ class BookingServiceApplicationTests {
     @MockBean
     private BookingIntegration integration;
 
-    // Zamenjujemo pravi publisher laznim, da testovi ne zahtevaju pokrenutu Kafku.
     @MockBean
     private BookingEventPublisher eventPublisher;
 
@@ -98,9 +86,7 @@ class BookingServiceApplicationTests {
 
         assertThat(booking.getBookingId()).isPositive();
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        // usluga traje 45 minuta -> kraj se racuna, klijent ga ne salje
         assertThat(booking.getEndTime()).isEqualTo(start.plusMinutes(45));
-        // cena je snimljena u trenutku zakazivanja
         assertThat(booking.getPrice()).isEqualByComparingTo("1500.00");
         assertThat(booking.getServiceName()).isEqualTo("Zensko sisanje");
     }
@@ -110,7 +96,6 @@ class BookingServiceApplicationTests {
         LocalDateTime start = futureStart(10, 0);
         createBooking(102L, start);
 
-        // Drugi termin pocinje 20 minuta kasnije - upada u prvih 45 minuta.
         ResponseEntity<String> response = postBooking(102L, start.plusMinutes(20), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
@@ -122,7 +107,6 @@ class BookingServiceApplicationTests {
         LocalDateTime start = futureStart(10, 0);
         createBooking(103L, start);
 
-        // Termin koji pocinje tacno kad se prethodni zavrsava mora da prodje.
         ResponseEntity<Booking> response = postBooking(103L, start.plusMinutes(45), Booking.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -135,7 +119,6 @@ class BookingServiceApplicationTests {
 
         restTemplate.postForEntity(url("/bookings/" + first.getBookingId() + "/cancel"), null, Booking.class);
 
-        // Otkazan termin ne zauzima vise slot.
         ResponseEntity<Booking> response = postBooking(104L, start, Booking.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
@@ -153,7 +136,6 @@ class BookingServiceApplicationTests {
 
     @Test
     void createBooking_serviceFromDifferentSalon_returns422() {
-        // Usluga pripada salonu 999, a zakazuje se u salonu 1.
         when(integration.getService(anyLong())).thenReturn(serviceOffering(999L, 45, true));
 
         ResponseEntity<String> response = postBooking(106L, futureStart(10, 0), String.class);
@@ -229,7 +211,6 @@ class BookingServiceApplicationTests {
         assertThat(response.getBody()[0].getStaffId()).isEqualTo(111L);
     }
 
-    // --- pomocne metode ---
 
     private Booking createBooking(long staffId, LocalDateTime start) {
         ResponseEntity<Booking> response = postBooking(staffId, start, Booking.class);

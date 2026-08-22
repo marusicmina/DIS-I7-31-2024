@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    stream:
+      kafka:
+        bindings:
+          bookingEvents-in-0:
+            consumer:
+              enable-dlq: true
+              dlq-name: booking-events-dlq

@@ -33,8 +33,6 @@ class GatewayApplicationTests {
 
     @Test
     void routesUseLoadBalancedUris() {
-        // "lb://" je ono sto tera gateway da adresu trazi od Eureke
-        // umesto da je ima zakucanu.
         List<String> uris = routeLocator.getRouteDefinitions()
                 .map(r -> r.getUri().toString())
                 .collectList()

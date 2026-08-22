@@ -5,24 +5,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * API ugovor catalog-service-a.
- *
- * Glavni potrosac je booking-service: pre nego sto potvrdi termin, sinhrono
- * poziva getService(serviceId) da sazna trajanje i cenu usluge i da proveri
- * da usluga uopste postoji i da je aktivna.
- */
+
 public interface CatalogService {
 
-    /**
-     * Vrati usluge, opciono filtrirane po salonu.
-     */
+    
     @GetMapping(value = "/catalog/services", produces = "application/json")
     List<ServiceOffering> getServices(@RequestParam(value = "salonId", required = false) Long salonId);
 
-    /**
-     * Vrati jednu uslugu. Baca NotFoundException (404) ako ne postoji.
-     */
+    
     @GetMapping(value = "/catalog/services/{serviceId}", produces = "application/json")
     ServiceOffering getService(@PathVariable("serviceId") long serviceId);
 

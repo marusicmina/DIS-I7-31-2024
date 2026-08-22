@@ -5,15 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Zakazan termin.
- *
- * Primeti serviceName i price: to su podaci koji pripadaju catalog-service-u,
- * ali ih ovde cuvamo kao snimak stanja u trenutku zakazivanja. Ako salon sutra
- * poskupi sisanje ili preimenuje uslugu, vec zakazan termin mora da zadrzi cenu
- * i naziv koji su vazili kad je klijent rezervisao. To nije dupliranje podataka
- * nego namerna denormalizacija - cesta i ocekivana u mikroservisima.
- */
+
 public class Booking {
 
     private long bookingId;

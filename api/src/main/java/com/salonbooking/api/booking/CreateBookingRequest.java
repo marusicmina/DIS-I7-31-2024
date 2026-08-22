@@ -4,13 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 
-/**
- * Zahtev klijenta za zakazivanje termina.
- *
- * Namerno NE sadrzi kraj termina ni cenu - njih booking-service izracuna sam,
- * na osnovu trajanja i cene koje dobije od catalog-service-a. Da klijent salje
- * kraj termina, mogao bi da zakaze sisanje od 45 minuta kao termin od 5 minuta.
- */
+
 public class CreateBookingRequest {
 
     private long clientId;

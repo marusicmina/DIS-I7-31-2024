@@ -5,10 +5,7 @@ import jakarta.persistence.*;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
-/**
- * Radno vreme jednog zaposlenog za jedan dan u nedelji.
- * Zaposleni ima onoliko redova koliko dana radi (npr. 5 za ponedeljak-petak).
- */
+
 @Entity
 @Table(name = "working_hours")
 public class WorkingHoursEntity {
@@ -17,11 +14,7 @@ public class WorkingHoursEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * EnumType.STRING upisuje u bazu "MONDAY" umesto rednog broja.
-     * Sa ORDINAL bi dodavanje nove vrednosti u enum pomerilo znacenje
-     * svih vec upisanih redova - tiha i vrlo neprijatna greska.
-     */
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private DayOfWeek dayOfWeek;

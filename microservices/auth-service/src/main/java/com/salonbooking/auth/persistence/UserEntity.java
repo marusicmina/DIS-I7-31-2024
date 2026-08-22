@@ -20,7 +20,6 @@ public class UserEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    // Cuvamo iskljucivo BCrypt hash, nikad plain-text lozinku.
     @Column(nullable = false)
     private String passwordHash;
 

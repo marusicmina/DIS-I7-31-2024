@@ -33,7 +33,6 @@ class StaffMapperTest {
         assertThat(api.getSpecialization()).isEqualTo("frizer");
         assertThat(api.getServiceAddress()).isEqualTo("10.0.0.5:8084");
         assertThat(api.getWorkingHours()).hasSize(2);
-        // sortirano po danu: ponedeljak pre subote
         assertThat(api.getWorkingHours().get(0).getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
         assertThat(api.getWorkingHours().get(1).getDayOfWeek()).isEqualTo(DayOfWeek.SATURDAY);
     }
@@ -49,7 +48,6 @@ class StaffMapperTest {
         assertThat(entity.getId()).isNull();
         assertThat(entity.getFirstName()).isEqualTo("Marko");
         assertThat(entity.getWorkingHours()).hasSize(1);
-        // obe strane veze moraju biti postavljene, inace staff_id ostaje prazan u bazi
         assertThat(entity.getWorkingHours().get(0).getStaff()).isSameAs(entity);
     }
 

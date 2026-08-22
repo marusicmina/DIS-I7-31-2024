@@ -16,23 +16,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
     List<BookingEntity> findBySalonId(long salonId);
 
-    /**
-     * Da li zaposleni vec ima termin koji se preklapa sa trazenim intervalom?
-     *
-     * Dva intervala se preklapaju ako jedan pocinje pre nego sto se drugi zavrsi,
-     * I zavrsava se posle nego sto drugi pocne:
-     *
-     *     postojeci:  |-------|
-     *     novi:            |-------|      preklapa se
-     *
-     *     postojeci:  |-------|
-     *     novi:               |-------|   NE preklapa se (dodiruju se)
-     *
-     * Zato strogo < i > : termin koji pocinje tacno kad se prethodni zavrsava
-     * je sasvim u redu i mora da prodje.
-     *
-     * Otkazani termini se ne racunaju - oni su oslobodili slot.
-     */
+   
     @Query("""
             select count(b) > 0 from BookingEntity b
             where b.staffId = :staffId

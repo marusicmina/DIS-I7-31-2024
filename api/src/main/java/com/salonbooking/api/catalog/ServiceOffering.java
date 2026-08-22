@@ -2,12 +2,7 @@ package com.salonbooking.api.catalog;
 
 import java.math.BigDecimal;
 
-/**
- * Usluga koju salon nudi (npr. "Zensko sisanje", "Manikir sa trajnim lakom").
- *
- * durationMinutes je kljucan podatak za zakazivanje: booking-service ga koristi
- * da izracuna kraj termina na osnovu pocetka koji je klijent izabrao.
- */
+
 public class ServiceOffering {
 
     private long serviceId;

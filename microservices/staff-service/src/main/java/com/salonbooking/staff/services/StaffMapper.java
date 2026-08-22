@@ -15,7 +15,6 @@ public class StaffMapper {
 
     public Staff entityToApi(StaffEntity entity, String serviceAddress) {
         List<WorkingHours> hours = entity.getWorkingHours().stream()
-                // sortiramo po danu da odgovor uvek ima isti, predvidiv redosled
                 .sorted(Comparator.comparing(WorkingHoursEntity::getDayOfWeek))
                 .map(wh -> new WorkingHours(wh.getDayOfWeek(), wh.getStartTime(), wh.getEndTime()))
                 .toList();
@@ -46,10 +45,7 @@ public class StaffMapper {
         return entity;
     }
 
-    /**
-     * Zamenjuje radno vreme entiteta onim iz API objekta.
-     * Koristi se i pri kreiranju i pri izmeni zaposlenog.
-     */
+    
     public void applyWorkingHours(StaffEntity entity, List<WorkingHours> hours) {
         entity.clearWorkingHours();
         if (hours == null) {

@@ -16,10 +16,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Integracioni test celog auth toka: registracija -> pokusaj duplikata (409) ->
- * uspesan login -> login sa pogresnom lozinkom (401) -> GET korisnika bez lozinke u odgovoru.
- */
+
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AuthServiceApplicationTests {

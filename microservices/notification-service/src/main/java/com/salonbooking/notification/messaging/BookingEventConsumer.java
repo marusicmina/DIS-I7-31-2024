@@ -9,18 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.function.Consumer;
 
-/**
- * Slusa dogadjaje o terminima i salje odgovarajuce obavestenje.
- *
- * Spring Cloud Stream u funkcionalnom stilu: dovoljno je da postoji @Bean tipa
- * Consumer<T>, a framework ga sam poveze sa Kafka topic-om preko konfiguracije
- * (spring.cloud.function.definition + bindings u application.yml). Nema ni jedne
- * linije koda koja pominje Kafku.
- *
- * Bitno: ovaj servis ne zna ko je poslao dogadjaj niti mu odgovara. Ako se
- * ugasi, poruke ga cekaju u Kafki i obradi ih kad se vrati - to je sustinska
- * prednost asinhrone komunikacije nad sinhronim pozivom.
- */
+
 @Configuration
 public class BookingEventConsumer {
 

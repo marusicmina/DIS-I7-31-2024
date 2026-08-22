@@ -5,15 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Poruka koja putuje kroz Kafku kada se nesto desi sa terminom.
- *
- * Namerno nosi SVE sto je potrebno primaocima (naziv usluge, vreme, cenu),
- * umesto samo bookingId. Da salje samo ID, notification-service bi morao
- * sinhrono da zove booking-service da sazna detalje - cime bismo vratili tacno
- * onu zavisnost koju asinhronom komunikacijom izbegavamo. Ovako notification
- * radi i kad je booking-service ugasen.
- */
+
 public class BookingEvent {
 
     private BookingEventType type;
@@ -32,7 +24,6 @@ public class BookingEvent {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime endTime;
 
-    /** Kada je dogadjaj nastao - korisno za redosled i za otklanjanje gresaka. */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime eventTime;
 

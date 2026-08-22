@@ -9,18 +9,12 @@ eureka:
   instance:
     hostname: ${EUREKA_HOSTNAME:localhost}
   client:
-    # Eureka server je i sam Eureka klijent po default-u - iskljucujemo to,
-    # jer imamo jednu instancu registra i nema kome da se prijavljuje.
     registerWithEureka: false
     fetchRegistry: false
     serviceUrl:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
 
   server:
-    # U razvoju iskljucujemo "self-preservation": to je zastita koja u produkciji
-    # sprecava Eureku da izbaci servise kad naglo prestanu da salju otkucaje
-    # (jer je verovatnije da je pukla mreza nego svi servisi odjednom).
-    # Lokalno nam samo smeta - servis koji ugasimo ostao bi u registru jos dugo.
     enableSelfPreservation: false
     evictionIntervalTimerInMs: 5000
     responseCacheUpdateIntervalMs: 5000

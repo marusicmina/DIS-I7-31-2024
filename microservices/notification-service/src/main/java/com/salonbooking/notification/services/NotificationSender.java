@@ -7,14 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
 
-/**
- * Sastavlja i "salje" obavestenja klijentu.
- *
- * Slanje je simulirano ispisom u log - pravi SMTP ili SMS provajder bio bi
- * jedina izmena, a sve ostalo (kada se salje, sta pise) ostalo bi isto.
- * Za potrebe projekta je bitno da se vidi da je poruka stigla asinhrono,
- * bez da booking-service bilo sta ceka.
- */
+
 @Service
 public class NotificationSender {
 
@@ -44,7 +37,6 @@ public class NotificationSender {
     }
 
     private void deliver(BookingEvent event, String subject, String body) {
-        // Ovde bi u produkciji islo slanje kroz JavaMailSender ili SMS API.
         LOG.info("[NOTIFIKACIJA] klijent={} | termin={} | {} -> {}",
                 event.getClientId(), event.getBookingId(), subject, body);
     }

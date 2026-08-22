@@ -14,14 +14,7 @@ import java.util.function.Consumer;
 
 import static org.mockito.Mockito.*;
 
-/**
- * Testira logiku obrade dogadjaja bez pokretanja Kafke.
- *
- * Zasto bez Kafke: Consumer je obicna Java funkcija, a Spring Cloud Stream je
- * samo dovodi do poruka. Kad testiramo STA servis radi sa dogadjajem, broker
- * nije potreban - pozivamo funkciju direktno. Da Kafka stvarno prenosi poruke
- * proverava se rucno kroz docker-compose, sto je opisano u dokumentaciji.
- */
+
 class BookingEventConsumerTest {
 
     private NotificationSender sender;

@@ -95,14 +95,7 @@ public class StaffServiceImpl implements StaffService {
         LOG.debug("deleteStaffMember: obrisan (ako je postojao) zaposleni sa id={}", staffId);
     }
 
-    /**
-     * Provera da li zaposleni RADI u zadatom intervalu.
-     *
-     * Namerno ne zna nista o vec zakazanim terminima - ti podaci pripadaju
-     * booking-service-u, koji preklapanje proverava u svojoj bazi. Ovaj servis
-     * odgovara iskljucivo na osnovu podataka koje poseduje: status zaposlenog
-     * i njegovo radno vreme.
-     */
+    
     @Override
     public AvailabilityResponse checkAvailability(long staffId, LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) {
@@ -118,8 +111,6 @@ public class StaffServiceImpl implements StaffService {
             return unavailable(staffId, "Zaposleni nije aktivan");
         }
 
-        // Termin koji prelazi ponoc ne moze da se uporedi sa radnim vremenom
-        // jednog dana, a u salonu lepote ionako nema smisla.
         if (!start.toLocalDate().equals(end.toLocalDate())) {
             return unavailable(staffId, "Termin ne moze da prelazi u naredni dan");
         }
@@ -133,9 +124,6 @@ public class StaffServiceImpl implements StaffService {
         LocalTime startTime = start.toLocalTime();
         LocalTime endTime = end.toLocalTime();
 
-        // Granice su ukljucive: ako radi od 09:00 do 17:00, termin 09:00-09:45
-        // je ispravan, kao i 16:15-17:00. Zato !isBefore / !isAfter, a ne
-        // isAfter / isBefore - inace bi termin tacno na granici bio odbijen.
         boolean insideWorkingHours = !startTime.isBefore(hours.getStartTime())
                 && !endTime.isAfter(hours.getEndTime());
 

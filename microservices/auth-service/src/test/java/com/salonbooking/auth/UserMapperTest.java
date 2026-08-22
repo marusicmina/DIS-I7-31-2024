@@ -23,7 +23,5 @@ class UserMapperTest {
         assertThat(summary.getUserId()).isEqualTo(1L);
         assertThat(summary.getEmail()).isEqualTo("mina@example.com");
         assertThat(summary.getRole()).isEqualTo(Role.CUSTOMER);
-        // UserSummary namerno nema getter za lozinku/hash - ako neko doda password polje
-        // u UserSummary, ovaj test ce prestati da se kompajlira i to je namerno "upozorenje".
     }
 }

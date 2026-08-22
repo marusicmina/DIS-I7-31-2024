@@ -17,11 +17,9 @@ public class StaffEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Referenca na salon iz salon-service-a - obican broj, ne strani kljuc (druga baza). */
     @Column(nullable = false)
     private long salonId;
 
-    /** Opciona veza ka nalogu u auth-service-u; zaposleni ne mora imati nalog. */
     private Long userId;
 
     @Column(nullable = false)
@@ -35,12 +33,7 @@ public class StaffEntity {
     @Column(nullable = false)
     private boolean active = true;
 
-    /**
-     * EAGER je ovde svestan izbor: radno vreme je malo (najvise 7 redova) i
-     * potrebno je prakticno pri svakom citanju zaposlenog, pogotovo u proveri
-     * dostupnosti. Uz LAZY bismo dobili LazyInitializationException cim
-     * pokusamo da mapiramo entitet u DTO izvan transakcije.
-     */
+    
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<WorkingHoursEntity> workingHours = new ArrayList<>();
 
@@ -57,10 +50,7 @@ public class StaffEntity {
         this.active = active;
     }
 
-    /**
-     * Dodaje radno vreme i odrzava obe strane veze. Ako bismo samo uradili
-     * workingHours.add(wh), kolona staff_id bi ostala prazna u bazi.
-     */
+    
     public void addWorkingHours(WorkingHoursEntity wh) {
         wh.setStaff(this);
         this.workingHours.add(wh);
@@ -70,7 +60,6 @@ public class StaffEntity {
         this.workingHours.clear();
     }
 
-    /** Radno vreme za zadati dan u nedelji, ako tog dana uopste radi. */
     public Optional<WorkingHoursEntity> workingHoursFor(DayOfWeek day) {
         return workingHours.stream()
                 .filter(wh -> wh.getDayOfWeek() == day)

@@ -1,12 +1,3 @@
-# Konfiguracija koja vazi SAMO za booking-service.
-#
-# Spring Cloud Config spaja application.yml (zajednicko) sa <ime-servisa>.yml
-# (specificno), pri cemu specificno ima prednost. Ime fajla mora da odgovara
-# vrednosti spring.application.name u servisu.
-#
-# Podesavanja otpornosti stoje ovde jer se najcesce menjaju u radu sa sistemom -
-# npr. ako se ispostavi da staff-service povremeno kasni, prag za otvaranje
-# circuit breaker-a se podesi ovde, bez ponovnog build-a booking-service-a.
 
 resilience4j:
   circuitbreaker:
@@ -19,7 +10,6 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
         registerHealthIndicator: true
-        # 404 nije kvar servisa nego legitiman odgovor - ne sme da otvara kolo.
         ignoreExceptions:
           - org.springframework.web.client.HttpClientErrorException$NotFound
           - com.salonbooking.util.exceptions.NotFoundException

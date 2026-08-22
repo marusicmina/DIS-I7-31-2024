@@ -19,21 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * REST pozivi ka ostalim mikroservisima.
- *
- * Adrese su imena servisa iz Eureke ("http://salon-service/..."), a ne portovi.
- * RestTemplate je oznacen sa @LoadBalanced (vidi RestTemplateConfig), pa Spring
- * Cloud pre slanja zahteva zameni ime stvarnom adresom instance iz registra.
- *
- * Svaki poziv je zasticen sa @Retry i @CircuitBreaker:
- *  - Retry ponavlja poziv ako je greska prolazna (mrezni prekid, servis se bas dize)
- *  - CircuitBreaker posle previse uzastopnih gresaka "otvara kolo" i neko vreme
- *    odmah odbija pozive, umesto da svaki zahtev ceka tajmaut. Time se pad jednog
- *    servisa ne pretvara u zagusenje celog sistema.
- * Redosled je bitan: retry je unutar circuit breaker-a, pa se ponovljeni pokusaji
- * broje kao jedan dogadjaj prema kolu.
- */
+
 @Component
 public class BookingIntegrationImpl implements BookingIntegration {
 
@@ -77,13 +63,6 @@ public class BookingIntegrationImpl implements BookingIntegration {
         return restTemplate.getForObject(url, AvailabilityResponse.class);
     }
 
-    // --- fallback metode ---
-    //
-    // Resilience4j ih poziva kada je kolo otvoreno ili kada poziv baci gresku.
-    // Moraju da imaju isti potpis kao originalna metoda plus Throwable na kraju.
-    //
-    // 404 od drugog servisa NIJE kvar - to je legitiman odgovor "ne postoji",
-    // pa ga prevodimo u NotFoundException. Sve ostalo tretiramo kao nedostupnost.
 
     private Salon salonFallback(long salonId, Throwable t) {
         if (isNotFound(t)) {
@@ -108,8 +87,6 @@ public class BookingIntegrationImpl implements BookingIntegration {
             throw new NotFoundException("Zaposleni nije pronadjen za staffId: " + staffId);
         }
         LOG.warn("staff-service nedostupan (staffId={}): {}", staffId, t.toString());
-        // Ovde NE vracamo "slobodan je" - kad ne mozemo da proverimo dostupnost,
-        // sigurnije je odbiti zakazivanje nego rizikovati dupli termin.
         throw new ServiceUnavailableException(
                 "Trenutno nije moguce proveriti raspolozivost zaposlenog. Pokusajte ponovo za koji trenutak.");
     }

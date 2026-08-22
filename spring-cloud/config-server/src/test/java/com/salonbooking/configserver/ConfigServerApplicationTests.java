@@ -27,12 +27,10 @@ class ConfigServerApplicationTests {
 
     @Test
     void servesSharedConfigurationForAnyService() {
-        // /{ime-servisa}/{profil} je standardni Config Server endpoint.
         ResponseEntity<String> response =
                 restTemplate.getForEntity(url("/salon-service/default"), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        // Vrednost dolazi iz config-repo/application.yml
         assertThat(response.getBody()).contains("com.salonbooking");
     }
 
@@ -42,7 +40,6 @@ class ConfigServerApplicationTests {
                 restTemplate.getForEntity(url("/booking-service/default"), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        // Vrednost dolazi iz config-repo/booking-service.yml
         assertThat(response.getBody()).contains("resilience4j");
     }
 

@@ -65,7 +65,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         UserEntity entity = repository.findByEmailIgnoreCase(body.getEmail())
-                // namerno ista poruka kao za pogresnu lozinku - ne otkrivamo da li email postoji
                 .orElseThrow(() -> new AuthenticationException("Pogresan email ili lozinka"));
 
         if (!passwordEncoder.matches(body.getPassword(), entity.getPasswordHash())) {

@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
-/**
- * Centralizovano mapiranje domenskih izuzetaka na HTTP odgovore.
- * Deljeno izmedju svih mikroservisa kroz util modul (isti obrazac kao u knjizi).
- */
+
 @RestControllerAdvice
 public class GlobalControllerExceptionHandler {
 

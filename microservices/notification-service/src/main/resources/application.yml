@@ -5,40 +5,25 @@ spring:
   application:
     name: notification-service
 
-  # Povuci zajednicku konfiguraciju sa config-servera.
-  # "optional:" znaci da servis radi i ako config-server nije pokrenut.
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
   cloud:
-    # Govori Spring Cloud Stream-u koji @Bean je funkcija koju treba povezati.
     function:
       definition: bookingEvents
 
     stream:
       bindings:
-        # "bookingEvents-in-0" = ulazni kanal funkcije bookingEvents.
         bookingEvents-in-0:
           destination: booking-events
-          # Consumer group: sve instance notification-service-a dele isti posao.
-          # Da grupe nema, SVAKA instanca bi obradila SVAKU poruku i klijent bi
-          # dobio onoliko mejlova koliko ima pokrenutih instanci.
           group: notification-group
           consumer:
-            # Tri pokusaja pre nego sto poruka ode u dead-letter queue.
             max-attempts: 3
             back-off-initial-interval: 1000
       kafka:
         binder:
           brokers: ${KAFKA_BROKERS:localhost:29092}
           auto-create-topics: true
-        bindings:
-          bookingEvents-in-0:
-            consumer:
-              # Poruke koje ni posle tri pokusaja ne mogu da se obrade odlaze u
-              # poseban topic umesto da blokiraju obradu ostalih.
-              enable-dlq: true
-              dlq-name: booking-events-dlq
 
   kafka:
     bootstrap-servers: ${KAFKA_BROKERS:localhost:29092}

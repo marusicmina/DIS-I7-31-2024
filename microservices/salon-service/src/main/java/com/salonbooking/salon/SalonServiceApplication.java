@@ -8,9 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 
-// scanBasePackages = "com.salonbooking" je bitno: pokriva i com.salonbooking.salon.*
-// (ovaj servis) i com.salonbooking.util.* (deljene komponente, npr. GlobalControllerExceptionHandler),
-// jer @SpringBootApplication po default-u skenira samo paket glavne klase i njegove podpakete.
 @SpringBootApplication(scanBasePackages = "com.salonbooking")
 @EnableDiscoveryClient
 public class SalonServiceApplication {

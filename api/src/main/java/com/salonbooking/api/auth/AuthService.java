@@ -5,25 +5,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * API ugovor auth-service-a. Kasnije ce ga koristiti gateway (rutiranje +
- * provera tokena) i, po potrebi, drugi mikroservisi (npr. booking-service
- * moze da pozove getUser da proveri vlasnika salona).
- */
+
 public interface AuthService {
 
-    /**
-     * Registracija novog korisnika (klijent ili vlasnik salona). Vraca 409 ako
-     * email vec postoji.
-     */
+    
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(value = "/auth/register", consumes = "application/json", produces = "application/json")
     UserSummary register(@RequestBody RegisterRequest body);
 
-    /**
-     * Login - vraca JWT token. Baca AuthenticationException (401) ako su
-     * email/lozinka pogresni.
-     */
+ 
     @PostMapping(value = "/auth/login", consumes = "application/json", produces = "application/json")
     AuthResponse login(@RequestBody LoginRequest body);
 

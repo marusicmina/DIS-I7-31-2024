@@ -1,9 +1,6 @@
 package com.salonbooking.api.auth;
 
-/**
- * Javni prikaz korisnika - NAMERNO ne sadrzi lozinku/hash.
- * Ovo je ono sto se vraca kroz REST API, za razliku od interne UserEntity.
- */
+
 public class UserSummary {
 
     private long userId;

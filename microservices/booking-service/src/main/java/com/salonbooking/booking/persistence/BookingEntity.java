@@ -30,10 +30,7 @@ public class BookingEntity {
     @Column(nullable = false)
     private long serviceId;
 
-    /**
-     * Naziv i cena usluge u trenutku zakazivanja - snimak, ne veza.
-     * Ako salon kasnije promeni cenu, ovaj termin zadrzava dogovorenu.
-     */
+    
     @Column(nullable = false)
     private String serviceName;
 

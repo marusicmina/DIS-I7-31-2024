@@ -2,14 +2,7 @@ package com.salonbooking.api.staff;
 
 import java.util.List;
 
-/**
- * Zaposleni u salonu (frizer, kozmeticar, maser...).
- *
- * userId je opciona veza ka nalogu u auth-service-u - zaposleni moze imati nalog
- * kojim se prijavljuje i vidi svoj raspored, ali ne mora (npr. salon ga vodi
- * samo evidenciono). Kao i salonId, to je obican broj a ne strani kljuc,
- * jer je rec o drugom mikroservisu sa svojom bazom.
- */
+
 public class Staff {
 
     private long staffId;
@@ -18,12 +11,10 @@ public class Staff {
     private String firstName;
     private String lastName;
 
-    /** Npr. "frizer", "kozmeticar", "maniklir" - po cemu klijent bira zaposlenog. */
     private String specialization;
 
     private boolean active;
 
-    /** Radno vreme po danima u nedelji. */
     private List<WorkingHours> workingHours;
 
     private String serviceAddress;

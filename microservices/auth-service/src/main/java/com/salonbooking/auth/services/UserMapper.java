@@ -7,10 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
 
-    /**
-     * Namerno postoji samo entityToSummary (nikad "sve" polje entiteta) -
-     * passwordHash ne sme nikada da napusti auth-service kroz API.
-     */
+   
     public UserSummary entityToSummary(UserEntity entity) {
         return new UserSummary(
                 entity.getId(),

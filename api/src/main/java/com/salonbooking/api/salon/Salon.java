@@ -2,11 +2,6 @@ package com.salonbooking.api.salon;
 
 import java.time.LocalTime;
 
-/**
- * API DTO za salon lepote. Ovo je "ugovor" (contract) izmedju salon-service-a
- * i svih ostalih mikroservisa/klijenata koji citaju podatke o salonu
- * (npr. booking-service, gateway).
- */
 public class Salon {
 
     private long salonId;
@@ -19,8 +14,6 @@ public class Salon {
     private LocalTime closingTime;
     private long ownerId;
 
-    // Adresa/instanca mikroservisa koja je odgovorila - korisno za demonstraciju
-    // load-balancinga izmedju vise instanci istog servisa (isti obrazac kao u knjizi).
     private String serviceAddress;
 
     public Salon() {

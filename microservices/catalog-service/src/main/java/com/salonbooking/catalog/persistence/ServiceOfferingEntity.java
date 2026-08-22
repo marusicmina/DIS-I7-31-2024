@@ -14,11 +14,7 @@ public class ServiceOfferingEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Referenca na salon iz salon-service-a. Namerno je obican broj, a NE strani kljuc -
-     * svaki mikroservis ima svoju bazu, pa relacije izmedju servisa ne mogu (i ne treba)
-     * da se cuvaju kao FK. Postojanje salona proverava booking-service pozivom ka salon-service-u.
-     */
+    
     @Column(nullable = false)
     private long salonId;
 
@@ -31,8 +27,6 @@ public class ServiceOfferingEntity {
     @Column(nullable = false)
     private int durationMinutes;
 
-    // BigDecimal, a ne double - novac se nikada ne cuva kao decimalni broj
-    // zbog gresaka u zaokruzivanju.
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 

@@ -18,11 +18,7 @@ import java.time.LocalTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Integracioni test: podize pravi Postgres kontejner (Testcontainers) i
- * proverava ceo tok kroz REST API salon-service-a - kreiranje, citanje i
- * greske (404/422), isto kao "test-em-all" pristup iz knjige, samo kao JUnit test.
- */
+
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SalonServiceApplicationTests {

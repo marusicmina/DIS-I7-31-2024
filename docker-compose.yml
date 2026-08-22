@@ -1,14 +1,3 @@
-# Docker Compose - kompletan sistem, jednom komandom.
-#
-# Sadrzi: Eureka (discovery), Config Server (centralizovana konfiguracija),
-# Gateway (jedina javna ulazna tacka), Kafka (message broker), sest
-# mikroservisa i pet PostgreSQL baza.
-#
-# Redosled dizanja resavaju healthcheck-ovi i depends_on: prvo Eureka, pa
-# Config Server, pa Kafka i baze, i tek onda servisi.
-#
-# Pre "docker compose up --build" pokreni "./gradlew build" da se generisu
-# JAR fajlovi (build/libs/*.jar) koje Dockerfile-ovi kopiraju u image.
 
 services:
 
@@ -32,8 +21,7 @@ services:
       context: ./spring-cloud/config-server
     container_name: config-server
     environment:
-      # Montiran folder umesto onog upakovanog u JAR - konfiguracija se moze
-      # menjati bez ponovnog build-a image-a.
+      
       CONFIG_REPO_LOCATION: file:/config-repo/
       EUREKA_URL: http://eureka-server:8761/eureka/
     volumes:
@@ -116,7 +104,6 @@ services:
       AUTH_DB_NAME: authdb
       AUTH_DB_USER: auth
       AUTH_DB_PASSWORD: auth
-      # VAZNO: u produkciji postaviti pravu tajnu vrednost (npr. kroz .env fajl koji NIJE u git-u).
       JWT_SECRET: ${JWT_SECRET:-salon-booking-system-dev-secret-change-me-please-32chars-min}
       EUREKA_URL: http://eureka-server:8761/eureka/
       CONFIG_SERVER_URL: http://config-server:8888
@@ -254,18 +241,14 @@ services:
     image: apache/kafka:3.8.0
     container_name: kafka
     environment:
-      # KRaft rezim - Kafka od verzije 3.x vise ne zahteva Zookeeper.
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      # Dva slusaca: PLAINTEXT za kontejnere unutar Docker mreze,
-      # PLAINTEXT_HOST za servise koje pokreces iz IDE-a na svom racunaru.
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXT_HOST://:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      # Jedan broker u razvoju - replikacija mora biti 1, inace se interni topic-i ne kreiraju.
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -308,8 +291,6 @@ services:
       - "8080:8080"
     depends_on:
       eureka-server:
-        condition: service_healthy
-      config-server:
         condition: service_healthy
       config-server:
         condition: service_healthy

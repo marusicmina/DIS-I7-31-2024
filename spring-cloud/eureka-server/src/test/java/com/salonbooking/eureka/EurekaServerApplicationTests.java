@@ -39,8 +39,6 @@ class EurekaServerApplicationTests {
 
     @Test
     void registryEndpointRespondsWithEmptyRegistry() {
-        // Eureka izlaze registar na /eureka/apps - na pocetku je prazan,
-        // ali endpoint mora da postoji i odgovori.
         ResponseEntity<String> response =
                 restTemplate.getForEntity("http://localhost:" + port + "/eureka/apps", String.class);
 

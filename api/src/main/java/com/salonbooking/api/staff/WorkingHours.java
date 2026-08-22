@@ -3,10 +3,7 @@ package com.salonbooking.api.staff;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
-/**
- * Radno vreme zaposlenog za jedan dan u nedelji.
- * Zaposleni moze imati razlicito radno vreme po danima (npr. subotom krace).
- */
+
 public class WorkingHours {
 
     private DayOfWeek dayOfWeek;

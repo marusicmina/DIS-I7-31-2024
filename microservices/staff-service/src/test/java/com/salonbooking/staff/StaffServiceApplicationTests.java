@@ -26,8 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class StaffServiceApplicationTests {
 
-    // Fiksni datumi da test ne zavisi od toga kada se pokrece.
-    // 2026-09-07 je PONEDELJAK, 2026-09-06 je NEDELJA.
     private static final String PONEDELJAK = "2026-09-07";
     private static final String NEDELJA = "2026-09-06";
 

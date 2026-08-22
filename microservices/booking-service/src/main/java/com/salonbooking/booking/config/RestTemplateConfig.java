@@ -11,15 +11,6 @@ import java.time.Duration;
 @Configuration
 public class RestTemplateConfig {
 
-    /**
-     * @LoadBalanced je ono sto omogucava da u kodu pisemo "http://staff-service/..."
-     * umesto "http://localhost:8084/...". Spring Cloud presretne zahtev, pita Eureku
-     * koje instance nose to ime i izabere jednu (podrazumevano round-robin).
-     *
-     * Tajmauti su namerno kratki: ako zavisni servis ne odgovori za par sekundi,
-     * bolje je odustati nego drzati nit zauzetom. Bez tajmauta bi circuit breaker
-     * bio prakticno beskoristan - nikad ne bi stigao da registruje gresku.
-     */
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate(RestTemplateBuilder builder) {

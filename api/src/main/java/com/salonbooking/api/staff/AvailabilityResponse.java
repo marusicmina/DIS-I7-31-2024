@@ -1,19 +1,11 @@
 package com.salonbooking.api.staff;
 
-/**
- * Odgovor na pitanje "da li je zaposleni raspoloziv u trazenom terminu".
- *
- * Vazno za razumevanje granica izmedju servisa: staff-service odgovara SAMO na
- * osnovu radnog vremena i statusa zaposlenog. On ne zna nista o vec zakazanim
- * terminima - te podatke drzi booking-service u svojoj bazi i sam proverava
- * preklapanje. Tako svaki servis odlucuje iskljucivo o podacima koje poseduje.
- */
+
 public class AvailabilityResponse {
 
     private long staffId;
     private boolean available;
 
-    /** Objasnjenje kada available = false, npr. "Zaposleni ne radi nedeljom". */
     private String reason;
 
     public AvailabilityResponse() {

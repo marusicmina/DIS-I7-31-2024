@@ -1,0 +1,11 @@
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,gateway
+  endpoint:
+    gateway:
+     enabled: true
+    health:
+      show-details: always

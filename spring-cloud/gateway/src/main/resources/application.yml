@@ -10,11 +10,6 @@ spring:
 
   cloud:
     gateway:
-      # Rute: koja putanja ide kom servisu.
-      #
-      # "lb://" znaci load-balanced - gateway ne zna adresu servisa, nego ime
-      # pod kojim je prijavljen Eureki. Ako se podigne druga instanca, gateway
-      # sam pocinje da deli saobracaj izmedju njih, bez ijedne izmene ovde.
       routes:
         - id: auth-service
           uri: lb://auth-service
@@ -65,8 +60,6 @@ management:
   endpoints:
     web:
       exposure:
-        # "gateway" endpoint izlaze spisak ruta na /actuator/gateway/routes -
-        # korisno za proveru da li su se rute ucitale kako treba.
         include: health,info,prometheus,metrics,gateway
   endpoint:
     health:

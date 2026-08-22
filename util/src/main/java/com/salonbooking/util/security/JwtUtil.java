@@ -11,13 +11,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-/**
- * Zajednicka JWT logika - koristi je auth-service da izda token prilikom
- * logina, a kasnije ce je koristiti i gateway da validira token na ulazu u
- * sistem. Namerno ne izlaze io.jsonwebtoken tipove kroz svoj javni interfejs
- * (samo String/boolean/long) da potrosaci ovog modula ne moraju da imaju
- * jjwt na svom sopstvenom compile classpath-u.
- */
+
 @Component
 public class JwtUtil {
 
@@ -55,8 +49,6 @@ public class JwtUtil {
     }
 
     public long extractUserId(String token) {
-        // Broj se moze desirijalizovati kao Integer ili Long u zavisnosti od JSON parsera,
-        // pa koristimo Number.longValue() umesto direktnog kastovanja da izbegnemo ClassCastException.
         Number userId = (Number) parseClaims(token).get("userId");
         return userId.longValue();
     }
