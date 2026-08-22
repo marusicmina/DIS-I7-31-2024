@@ -583,17 +583,7 @@ servis obrađuje poruku koja je ostala u Kafka topic-u.
 
 ---
 
-## 11. Moguća proširenja
 
-Projekat se može dalje proširivati, ali sledeće stavke nisu deo osnovne implementacije:
-
-- `review-service` za ocene i komentare nakon završenog termina,
-- transactional outbox za pouzdanije slanje događaja,
-- Prometheus i Grafana za monitoring,
-- centralizovano logovanje,
-- distributed tracing,
-- deploy na Kubernetes,
-- Istio service mesh.
 
 Detaljnija objašnjenja pojedinih odluka u projektu nalaze se u:
 
