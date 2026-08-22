@@ -1,0 +1,29 @@
+# Zajednicka konfiguracija za SVE mikroservise.
+#
+# Ovo je jedini fajl koji treba promeniti da bi se npr. ukljucio novi actuator
+# endpoint ili promenio nivo logovanja na celom sistemu. Ranije je isti blok
+# stajao prepisan u svakih sest application.yml fajlova.
+#
+# Servisi ga povlace pri pokretanju kroz "spring.config.import: optional:configserver:...".
+# Prefiks "optional:" je namerno tu - ako config-server nije pokrenut, servis
+# svejedno starta sa svojim podrazumevanim vrednostima umesto da pukne.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.salonbooking: DEBUG
+    # Eureka klijent je bucan na INFO nivou - stisavamo ga da bi se u konzoli
+    # videli nasi logovi umesto otkucaja registra.
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN

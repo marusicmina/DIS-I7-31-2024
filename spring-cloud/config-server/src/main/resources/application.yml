@@ -1,0 +1,39 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+
+  profiles:
+    # "native" = konfiguracija se cita iz foldera, ne iz Git-a.
+    active: native
+
+  cloud:
+    config:
+      server:
+        native:
+          # Lokalno i iz IDE-a: fajlovi su upakovani u JAR (vidi processResources).
+          # U Docker-u: docker-compose montira /config-repo i postavlja ovu putanju,
+          # pa se konfiguracija menja bez ponovnog build-a.
+          search-locations: ${CONFIG_REPO_LOCATION:classpath:/config-repo/}
+
+eureka:
+  client:
+    enabled: true
+    serviceUrl:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    registryFetchIntervalSeconds: 5
+  instance:
+    preferIpAddress: true
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

@@ -25,10 +25,10 @@ spring:
       hibernate:
         format_sql: true
 
-  # Config server dolazi u kasnijem delu projekta - do tada je iskljucen.
-  cloud:
-    config:
-      enabled: false
+  # Povuci zajednicku konfiguraciju sa config-servera.
+  # "optional:" znaci da servis radi i ako config-server nije pokrenut.
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
 eureka:
   client:
@@ -46,19 +46,3 @@ eureka:
     preferIpAddress: true
     leaseRenewalIntervalInSeconds: 5
     leaseExpirationDurationInSeconds: 10
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus,metrics
-  endpoint:
-    health:
-      show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
-
-logging:
-  level:
-    com.salonbooking: DEBUG

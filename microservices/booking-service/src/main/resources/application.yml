@@ -24,10 +24,12 @@ spring:
       hibernate:
         format_sql: true
 
-  cloud:
-    config:
-      enabled: false
+  # Povuci zajednicku konfiguraciju sa config-servera.
+  # "optional:" znaci da servis radi i ako config-server nije pokrenut.
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
+  cloud:
     # --- Asinhrona komunikacija (Spring Cloud Stream + Kafka) ---
     stream:
       bindings:
@@ -108,22 +110,3 @@ resilience4j:
         baseConfig: default
       staffService:
         baseConfig: default
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus,metrics,circuitbreakers
-  endpoint:
-    health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-  metrics:
-    tags:
-      application: ${spring.application.name}
-
-logging:
-  level:
-    com.salonbooking: DEBUG

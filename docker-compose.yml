@@ -1,6 +1,11 @@
-# Docker Compose za razvojno (dev) okruzenje.
-# Sadrzi: Eureka (discovery), Kafka (message broker), sest mikroservisa i
-# njihove baze. Preostalo za naredne delove: config-server, gateway, review-service.
+# Docker Compose - kompletan sistem, jednom komandom.
+#
+# Sadrzi: Eureka (discovery), Config Server (centralizovana konfiguracija),
+# Gateway (jedina javna ulazna tacka), Kafka (message broker), sest
+# mikroservisa i pet PostgreSQL baza.
+#
+# Redosled dizanja resavaju healthcheck-ovi i depends_on: prvo Eureka, pa
+# Config Server, pa Kafka i baze, i tek onda servisi.
 #
 # Pre "docker compose up --build" pokreni "./gradlew build" da se generisu
 # JAR fajlovi (build/libs/*.jar) koje Dockerfile-ovi kopiraju u image.
@@ -21,6 +26,29 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+
+  config-server:
+    build:
+      context: ./spring-cloud/config-server
+    container_name: config-server
+    environment:
+      # Montiran folder umesto onog upakovanog u JAR - konfiguracija se moze
+      # menjati bez ponovnog build-a image-a.
+      CONFIG_REPO_LOCATION: file:/config-repo/
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    volumes:
+      - ./config-repo:/config-repo:ro
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      eureka-server:
+        condition: service_healthy
 
   salon-db:
     image: postgres:16-alpine
@@ -50,12 +78,15 @@ services:
       SALON_DB_USER: salon
       SALON_DB_PASSWORD: salon
       EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
     ports:
       - "8081:8081"
     depends_on:
       salon-db:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
 
   auth-db:
@@ -88,12 +119,15 @@ services:
       # VAZNO: u produkciji postaviti pravu tajnu vrednost (npr. kroz .env fajl koji NIJE u git-u).
       JWT_SECRET: ${JWT_SECRET:-salon-booking-system-dev-secret-change-me-please-32chars-min}
       EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
     ports:
       - "8082:8082"
     depends_on:
       auth-db:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
 
   catalog-db:
@@ -124,12 +158,15 @@ services:
       CATALOG_DB_USER: catalog
       CATALOG_DB_PASSWORD: catalog
       EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
     ports:
       - "8083:8083"
     depends_on:
       catalog-db:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
 
   staff-db:
@@ -160,12 +197,15 @@ services:
       STAFF_DB_USER: staff
       STAFF_DB_PASSWORD: staff
       EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
     ports:
       - "8084:8084"
     depends_on:
       staff-db:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
 
   booking-db:
@@ -196,6 +236,7 @@ services:
       BOOKING_DB_USER: booking
       BOOKING_DB_PASSWORD: booking
       EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
       KAFKA_BROKERS: kafka:9092
     ports:
       - "8085:8085"
@@ -203,6 +244,8 @@ services:
       booking-db:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -243,12 +286,32 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
       EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
     ports:
       - "8086:8086"
     depends_on:
       kafka:
         condition: service_healthy
       eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: ./spring-cloud/gateway
+    container_name: gateway
+    environment:
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
 
 volumes:

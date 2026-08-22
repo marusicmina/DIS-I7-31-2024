@@ -11,8 +11,8 @@ include ':microservices:booking-service'
 include ':microservices:notification-service'
 
 include ':spring-cloud:eureka-server'
+include ':spring-cloud:config-server'
+include ':spring-cloud:gateway'
 
 // Ostali moduli se dodaju u narednim delovima projekta (deo po deo, commit po commit):
 // include ':microservices:review-service'
-// include ':spring-cloud:config-server'
-// include ':spring-cloud:gateway'

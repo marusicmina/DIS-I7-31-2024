@@ -1,0 +1,78 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+
+  cloud:
+    gateway:
+      # Rute: koja putanja ide kom servisu.
+      #
+      # "lb://" znaci load-balanced - gateway ne zna adresu servisa, nego ime
+      # pod kojim je prijavljen Eureki. Ako se podigne druga instanca, gateway
+      # sam pocinje da deli saobracaj izmedju njih, bez ijedne izmene ovde.
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+
+        - id: salon-service
+          uri: lb://salon-service
+          predicates:
+            - Path=/salons/**
+
+        - id: catalog-service
+          uri: lb://catalog-service
+          predicates:
+            - Path=/catalog/**
+
+        - id: staff-service
+          uri: lb://staff-service
+          predicates:
+            - Path=/staff/**
+
+        - id: booking-service
+          uri: lb://booking-service
+          predicates:
+            - Path=/bookings/**
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # U produkciji ovde ide konkretna adresa fronta umesto "*".
+            allowedOrigins: "*"
+            allowedMethods: [GET, POST, PUT, DELETE, OPTIONS]
+            allowedHeaders: "*"
+
+eureka:
+  client:
+    enabled: true
+    serviceUrl:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    registryFetchIntervalSeconds: 5
+    initialInstanceInfoReplicationIntervalSeconds: 5
+  instance:
+    preferIpAddress: true
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # "gateway" endpoint izlaze spisak ruta na /actuator/gateway/routes -
+        # korisno za proveru da li su se rute ucitale kako treba.
+        include: health,info,prometheus,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.salonbooking: DEBUG
+    org.springframework.cloud.gateway: INFO

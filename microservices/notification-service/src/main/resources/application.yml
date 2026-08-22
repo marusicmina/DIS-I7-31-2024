@@ -5,10 +5,12 @@ spring:
   application:
     name: notification-service
 
-  cloud:
-    config:
-      enabled: false
+  # Povuci zajednicku konfiguraciju sa config-servera.
+  # "optional:" znaci da servis radi i ako config-server nije pokrenut.
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
+  cloud:
     # Govori Spring Cloud Stream-u koji @Bean je funkcija koju treba povezati.
     function:
       definition: bookingEvents
@@ -52,19 +54,3 @@ eureka:
     preferIpAddress: true
     leaseRenewalIntervalInSeconds: 5
     leaseExpirationDurationInSeconds: 10
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus,metrics
-  endpoint:
-    health:
-      show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
-
-logging:
-  level:
-    com.salonbooking: DEBUG
