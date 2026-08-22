@@ -7,6 +7,7 @@ import com.salonbooking.api.catalog.ServiceOffering;
 import com.salonbooking.api.salon.Salon;
 import com.salonbooking.api.staff.AvailabilityResponse;
 import com.salonbooking.booking.integration.BookingIntegration;
+import com.salonbooking.booking.messaging.BookingEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,10 @@ class BookingServiceApplicationTests {
 
     @MockBean
     private BookingIntegration integration;
+
+    // Zamenjujemo pravi publisher laznim, da testovi ne zahtevaju pokrenutu Kafku.
+    @MockBean
+    private BookingEventPublisher eventPublisher;
 
     @BeforeEach
     void setUpHappyPath() {

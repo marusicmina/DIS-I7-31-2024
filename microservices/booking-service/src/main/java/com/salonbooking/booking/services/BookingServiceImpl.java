@@ -5,9 +5,12 @@ import com.salonbooking.api.booking.BookingService;
 import com.salonbooking.api.booking.BookingStatus;
 import com.salonbooking.api.booking.CreateBookingRequest;
 import com.salonbooking.api.catalog.ServiceOffering;
+import com.salonbooking.api.event.BookingEvent;
+import com.salonbooking.api.event.BookingEventType;
 import com.salonbooking.api.salon.Salon;
 import com.salonbooking.api.staff.AvailabilityResponse;
 import com.salonbooking.booking.integration.BookingIntegration;
+import com.salonbooking.booking.messaging.BookingEventPublisher;
 import com.salonbooking.booking.persistence.BookingEntity;
 import com.salonbooking.booking.persistence.BookingRepository;
 import com.salonbooking.util.exceptions.ConflictException;
@@ -44,15 +47,17 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository repository;
     private final BookingMapper mapper;
     private final BookingIntegration integration;
+    private final BookingEventPublisher eventPublisher;
 
     @Value("${server.port}")
     private String port;
 
     public BookingServiceImpl(BookingRepository repository, BookingMapper mapper,
-                               BookingIntegration integration) {
+                               BookingIntegration integration, BookingEventPublisher eventPublisher) {
         this.repository = repository;
         this.mapper = mapper;
         this.integration = integration;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -115,7 +120,7 @@ public class BookingServiceImpl implements BookingService {
         LOG.info("Zakazan termin id={} u salonu '{}' kod zaposlenog {} za {} ({})",
                 saved.getId(), salon.getName(), saved.getStaffId(), start, service.getName());
 
-        // Ovde ce u sledecem koraku ici objava dogadjaja BookingCreated na Kafku.
+        publishEvent(BookingEventType.BOOKING_CREATED, saved);
         return mapper.entityToApi(saved, serviceAddress());
     }
 
@@ -161,7 +166,7 @@ public class BookingServiceImpl implements BookingService {
         BookingEntity saved = repository.save(entity);
         LOG.info("Otkazan termin id={}", bookingId);
 
-        // Ovde ce ici objava dogadjaja BookingCancelled.
+        publishEvent(BookingEventType.BOOKING_CANCELLED, saved);
         return mapper.entityToApi(saved, serviceAddress());
     }
 
@@ -180,9 +185,36 @@ public class BookingServiceImpl implements BookingService {
         BookingEntity saved = repository.save(entity);
         LOG.info("Termin id={} oznacen kao odrzan", bookingId);
 
-        // Ovde ce ici objava dogadjaja BookingCompleted - signal review-service-u
-        // da klijent sada sme da ostavi recenziju.
+        // Signal review-service-u da klijent sada sme da ostavi recenziju.
+        publishEvent(BookingEventType.BOOKING_COMPLETED, saved);
         return mapper.entityToApi(saved, serviceAddress());
+    }
+
+    /**
+     * Objavljuje dogadjaj o promeni termina.
+     *
+     * NAPOMENA o "dual write" problemu: upis u bazu i slanje poruke su dve
+     * odvojene operacije koje nisu u istoj transakciji. Ako aplikacija padne
+     * tacno izmedju njih, termin ostaje zapisan a dogadjaj se nikad ne posalje -
+     * klijent nece dobiti potvrdu. Za projekat je ovo prihvatljivo; u produkciji
+     * se resava obrascem "transactional outbox": dogadjaj se u istoj transakciji
+     * upise u pomocnu tabelu, a zaseban proces ga odatle salje brokeru.
+     */
+    private void publishEvent(BookingEventType type, BookingEntity entity) {
+        BookingEvent event = new BookingEvent(
+                type,
+                entity.getId(),
+                entity.getClientId(),
+                entity.getSalonId(),
+                entity.getStaffId(),
+                entity.getServiceId(),
+                entity.getServiceName(),
+                entity.getPrice(),
+                entity.getStartTime(),
+                entity.getEndTime(),
+                LocalDateTime.now()
+        );
+        eventPublisher.publish(event);
     }
 
     private BookingEntity findOrThrow(long bookingId) {

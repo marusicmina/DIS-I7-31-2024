@@ -28,6 +28,27 @@ spring:
     config:
       enabled: false
 
+    # --- Asinhrona komunikacija (Spring Cloud Stream + Kafka) ---
+    stream:
+      bindings:
+        # Ime binding-a koje kod koristi (StreamBridge) -> stvarni Kafka topic.
+        # Kod ne zna ime topic-a, sto znaci da moze da se promeni bez rekompajliranja.
+        bookingEvents-out-0:
+          destination: booking-events
+          producer:
+            # Kljuc particije uzimamo iz zaglavlja poruke (bookingId), da bi
+            # dogadjaji istog termina uvek isli u istu particiju - i time zadrzali redosled.
+            partition-key-expression: headers['partitionKey']
+      kafka:
+        binder:
+          # Lokalno iz IDE-a: Kafka je mapirana na host port 29092.
+          # U Docker-u docker-compose postavlja KAFKA_BROKERS na kafka:9092.
+          brokers: ${KAFKA_BROKERS:localhost:29092}
+          auto-create-topics: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:29092}
+
 eureka:
   client:
     enabled: true
